@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class RoleAccessTest extends TestCase
@@ -36,7 +38,11 @@ class RoleAccessTest extends TestCase
     {
         $this->actingAs(User::factory()->admin()->create());
 
-        $this->get('/admin/dashboard')->assertOk()->assertSee('Admin dashboard');
+        $this->get('/admin/dashboard')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Dashboard')
+                ->has('stats', fn (Assert $stats) => $stats->hasAll(['shops', 'owners', 'products'])));
         $this->get('/admin/products')->assertOk();
         $this->get('/owner/dashboard')->assertForbidden();
     }
@@ -45,7 +51,9 @@ class RoleAccessTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        $this->get('/owner/dashboard')->assertOk()->assertSee('Shop owner dashboard');
+        $this->get('/owner/dashboard')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('Owner/Dashboard')->where('shop', null));
 
         foreach (['/admin/dashboard', '/admin/categories', '/admin/subcategories', '/admin/products', '/admin/log-viewer'] as $url) {
             $this->get($url)->assertForbidden();
@@ -77,17 +85,32 @@ class RoleAccessTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_navbar_shows_links_by_role(): void
+    public function test_pages_share_only_safe_user_fields_and_the_role(): void
     {
-        $this->actingAs(User::factory()->admin()->create())
-            ->get('/admin/dashboard')
-            ->assertSee(route('admin.categories.index'), false)
-            ->assertSee(route('log-viewer.index'), false);
+        // The Vue navbar picks its links from auth.user.role, so the role must be shared,
+        // but nothing else beyond id, name and email (no password hash, tokens, flags).
+        $owner = User::factory()->create();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($owner)
             ->get('/owner/dashboard')
-            ->assertSee('My dashboard')
-            ->assertDontSee(route('admin.categories.index'), false)
-            ->assertDontSee(route('log-viewer.index'), false);
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('auth.user', [
+                    'id' => $owner->id,
+                    'name' => $owner->name,
+                    'email' => $owner->email,
+                    'role' => User::ROLE_SHOP_OWNER,
+                ])
+                ->has('flash', fn (Assert $flash) => $flash->hasAll(['success', 'error'])));
+    }
+
+    public function test_owner_dashboard_shows_only_their_own_shop_fields(): void
+    {
+        $shop = Shop::factory()->create(['name' => 'Corner Store', 'is_active' => false]);
+
+        $this->actingAs($shop->owner)
+            ->get('/owner/dashboard')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Owner/Dashboard')
+                ->where('shop', ['name' => 'Corner Store', 'slug' => 'corner-store', 'is_active' => false]));
     }
 }

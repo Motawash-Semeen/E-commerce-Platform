@@ -7,11 +7,6 @@ use Illuminate\Validation\Rules\Password;
 
 class UpdatePasswordRequest extends FormRequest
 {
-    /**
-     * The profile page reads these errors from the "updatePassword" bag.
-     */
-    protected $errorBag = 'updatePassword';
-
     public function authorize(): bool
     {
         return true;

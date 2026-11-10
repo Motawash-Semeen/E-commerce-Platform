@@ -9,9 +9,6 @@ use Illuminate\Support\Facades\Hash;
 
 class PasswordController extends Controller
 {
-    /**
-     * Update the user's password.
-     */
     public function update(UpdatePasswordRequest $request): RedirectResponse
     {
         $request->user()->update([

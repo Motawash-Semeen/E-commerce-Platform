@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): View
+    public function edit(): Response
     {
-        return view('profile.edit', ['user' => $request->user()]);
+        // The form reads name and email from the shared auth.user prop.
+        return Inertia::render('Profile/Edit');
     }
 
     public function update(ProfileUpdateRequest $request): RedirectResponse
@@ -22,5 +23,5 @@ class ProfileController extends Controller
     }
 
     // No destroy(): there is a single admin and no registration,
-    // so deleting the account would lock everyone out.
+    // so deleting an account here could lock everyone out.
 }

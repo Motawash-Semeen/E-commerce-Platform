@@ -3,19 +3,21 @@
 namespace App\Modules\Admin\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Category\Models\Category;
+use App\Models\Shop;
+use App\Models\User;
 use App\Modules\Product\Models\Product;
-use App\Modules\Subcategory\Models\Subcategory;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): View
+    public function __invoke(): Response
     {
-        return view('Admin::dashboard', [
+        // Only numbers go to the page. (Listings are added once the shop_product table exists.)
+        return Inertia::render('Admin/Dashboard', [
             'stats' => [
-                'categories' => Category::count(),
-                'subcategories' => Subcategory::count(),
+                'shops' => Shop::count(),
+                'owners' => User::shopOwners()->count(),
                 'products' => Product::count(),
             ],
         ]);
