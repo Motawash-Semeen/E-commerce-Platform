@@ -8,8 +8,10 @@ use App\Modules\ShopOwner\Http\Requests\StoreShopOwnerRequest;
 use App\Modules\ShopOwner\Http\Requests\UpdateShopOwnerRequest;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * {shop_owner} only ever resolves to a shop owner (see the route binding in
@@ -17,20 +19,36 @@ use Illuminate\View\View;
  */
 class ShopOwnerController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): Response
     {
-        $owners = User::shopOwners()
-            ->with('shop')          // shop name per row without N+1
-            ->orderBy('name')
-            ->orderBy('id')         // tie-breaker for a stable page order
-            ->paginate(10);
+        $search = $request->string('search')->trim()->value();
 
-        return view('ShopOwner::index', compact('owners'));
+        $owners = User::shopOwners()
+            ->with('shop:id,owner_id,name')   // shop name per row without N+1
+            ->when($search, fn ($query) => $query->where(fn ($q) => $q
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")))
+            ->orderBy('name')
+            ->orderBy('id')                   // tie-breaker for a stable page order
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (User $owner) => [
+                'id' => $owner->id,
+                'name' => $owner->name,
+                'email' => $owner->email,
+                'is_active' => $owner->is_active,
+                'shop' => $owner->shop?->name,
+            ]);
+
+        return Inertia::render('Admin/ShopOwners/Index', [
+            'owners' => $owners,
+            'filters' => ['search' => $search],
+        ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('ShopOwner::create', ['owner' => new User]);
+        return Inertia::render('Admin/ShopOwners/Create');
     }
 
     public function store(StoreShopOwnerRequest $request): RedirectResponse
@@ -45,9 +63,11 @@ class ShopOwnerController extends Controller
             ->with('success', "Shop owner \"{$owner->name}\" created.");
     }
 
-    public function edit(User $shopOwner): View
+    public function edit(User $shopOwner): Response
     {
-        return view('ShopOwner::edit', ['owner' => $shopOwner]);
+        return Inertia::render('Admin/ShopOwners/Edit', [
+            'owner' => $shopOwner->only(['id', 'name', 'email', 'is_active']),
+        ]);
     }
 
     public function update(UpdateShopOwnerRequest $request, User $shopOwner): RedirectResponse

@@ -3,35 +3,52 @@
 namespace App\Modules\Subcategory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Category\Models\Category;
 use App\Modules\Subcategory\Http\Requests\StoreSubcategoryRequest;
 use App\Modules\Subcategory\Http\Requests\UpdateSubcategoryRequest;
-use App\Modules\Category\Models\Category;
 use App\Modules\Subcategory\Models\Subcategory;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SubcategoryController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): Response
     {
-        $subcategories = Subcategory::with('category')   // one query for all parents (no N+1)
+        $search = $request->string('search')->trim()->value();
+        $categoryId = $request->integer('category') ?: null;
+
+        $subcategories = Subcategory::with('category:id,name')   // one query for all parents (no N+1)
             ->withCount('products')
+            ->when($search, fn ($query) => $query->where('name', 'like', "%{$search}%"))
+            ->when($categoryId, fn ($query) => $query->where('category_id', $categoryId))
             ->orderBy('name')
             ->orderBy('id')  // tie-breaker: the same name can exist in two categories
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Subcategory $subcategory) => [
+                'id' => $subcategory->id,
+                'name' => $subcategory->name,
+                'slug' => $subcategory->slug,
+                'category' => $subcategory->category->name,
+                'products_count' => $subcategory->products_count,
+            ]);
 
-        return view('Subcategory::index', compact('subcategories'));
+        return Inertia::render('Admin/Subcategories/Index', [
+            'subcategories' => $subcategories,
+            'categories' => $this->categoryOptions(),
+            'filters' => ['search' => $search, 'category' => $categoryId],
+        ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('Subcategory::create', [
-            'subcategory' => new Subcategory,
+        return Inertia::render('Admin/Subcategories/Create', [
             'categories' => $this->categoryOptions(),
         ]);
     }
@@ -44,10 +61,10 @@ class SubcategoryController extends Controller
             ->with('success', "Subcategory \"{$subcategory->name}\" created.");
     }
 
-    public function edit(Subcategory $subcategory): View
+    public function edit(Subcategory $subcategory): Response
     {
-        return view('Subcategory::edit', [
-            'subcategory' => $subcategory,
+        return Inertia::render('Admin/Subcategories/Edit', [
+            'subcategory' => $subcategory->only(['id', 'name', 'slug', 'category_id']),
             'categories' => $this->categoryOptions(),
         ]);
     }
@@ -82,8 +99,8 @@ class SubcategoryController extends Controller
 
         try {
             $subcategory->delete();
-        } catch (QueryException $e) {
-            // Fallback: a product was added between the check and the delete.
+        } catch (QueryException) {
+            // A product was added between the check and the delete.
             return back()->with('error', "Cannot delete \"{$subcategory->name}\" because products still use it.");
         }
 
@@ -92,20 +109,10 @@ class SubcategoryController extends Controller
     }
 
     /**
-     * JSON for the product form's dependent dropdown: [{id, name}, ...].
-     */
-    public function forCategory(Category $category): JsonResponse
-    {
-        return response()->json(
-            $category->subcategories()->orderBy('name')->get(['id', 'name'])
-        );
-    }
-
-    /**
-     * Category id => name pairs for the <select>.
+     * [{id, name}, ...] for the category <select>.
      */
     private function categoryOptions(): Collection
     {
-        return Category::orderBy('name')->pluck('name', 'id');
+        return Category::orderBy('name')->get(['id', 'name']);
     }
 }

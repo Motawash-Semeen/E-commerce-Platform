@@ -3,64 +3,98 @@
 namespace App\Modules\Product\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Category\Models\Category;
 use App\Modules\Product\Http\Requests\StoreProductRequest;
 use App\Modules\Product\Http\Requests\UpdateProductRequest;
-use App\Modules\Category\Models\Category;
 use App\Modules\Product\Models\Product;
-use App\Modules\Subcategory\Models\Subcategory;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
+/**
+ * Admin: the shared catalog. Products added here (or by shop owners)
+ * are visible to every shop owner, who can list them in their shop.
+ */
 class ProductController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): Response
     {
-        $products = Product::with(['category', 'subcategory'])  // no N+1 in the table
-            ->latest()
-            ->latest('id')  // tie-breaker: rows saved in the same second keep a stable page order
-            ->paginate(10);
+        $search = $request->string('search')->trim()->value();
 
-        return view('Product::index', compact('products'));
+        $products = Product::with(['category:id,name', 'subcategory:id,name', 'creator:id,name,role'])
+            ->withCount('listings')
+            ->when($search, fn ($query) => $query->where('name', 'like', "%{$search}%"))
+            ->latest()
+            ->latest('id')  // tie-breaker: rows saved in the same second keep a stable order
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'image_url' => $product->image_url,
+                'category' => $product->category->name,
+                'subcategory' => $product->subcategory->name,
+                'creator' => $product->creator?->name,
+                'creator_is_admin' => (bool) $product->creator?->isAdmin(),
+                'listings_count' => $product->listings_count,
+                'old_price' => $product->old_price,
+                'new_price' => $product->new_price,
+            ]);
+
+        return Inertia::render('Admin/Products/Index', [
+            'products' => $products,
+            'filters' => ['search' => $search],
+        ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('Product::create', $this->formData(new Product));
+        return Inertia::render('Admin/Products/Create', [
+            'categories' => Category::withSubcategoryOptions(),
+        ]);
     }
 
     public function store(StoreProductRequest $request): RedirectResponse
     {
-        $data = $request->validated();
-
-        // store() gives the file a random name; the client's original name is never used.
-        $data['image'] = $request->file('image')->store('products', 'public');
-
-        $product = Product::create($data);
+        $product = new Product($request->safe()->except(['image', 'add_to_shop']));
+        // store() gives the file a random name; the client's file name is never used.
+        $product->image = $request->file('image')->store('products', 'public');
+        $product->created_by = $request->user()->id;   // never taken from the request
+        $product->save();
 
         return redirect()->route('admin.products.index')
-            ->with('success', "Product \"{$product->name}\" created.");
+            ->with('success', "Product \"{$product->name}\" added to the catalog.");
     }
 
-    public function edit(Product $product): View
+    public function edit(Product $product): Response
     {
-        return view('Product::edit', $this->formData($product));
+        return Inertia::render('Admin/Products/Edit', [
+            'product' => [
+                ...$product->only(['id', 'name', 'slug', 'category_id', 'subcategory_id', 'description', 'old_price', 'new_price']),
+                'image_url' => $product->image_url,
+            ],
+            'categories' => Category::withSubcategoryOptions(),
+        ]);
     }
 
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        // An empty file input would otherwise overwrite the current image with null.
-        $data = $request->safe()->except('image');
-        $oldImage = null;
+        // UpdateProductRequest already checked ProductPolicy@update.
+        $product->fill($request->safe()->except(['image', 'add_to_shop']));
 
+        $oldImage = null;
         if ($request->hasFile('image')) {
             $oldImage = $product->image;
-            $data['image'] = $request->file('image')->store('products', 'public');
+            $product->image = $request->file('image')->store('products', 'public');
         }
 
-        $product->update($data);
+        $product->save();
 
-        // Remove the old file only after the new one is saved and the row points to it.
+        // Remove the old file only after the row points to the new one.
         if ($oldImage) {
             Storage::disk('public')->delete($oldImage);
         }
@@ -71,31 +105,17 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
-        $product->delete();
-
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        // Friendly message first; the policy (and the restrictOnDelete key) back it up.
+        if ($product->listings()->exists()) {
+            return back()->with('error', "Cannot delete \"{$product->name}\": it's listed in a shop. Remove it from all shops first.");
         }
+
+        Gate::authorize('delete', $product);
+
+        $product->delete();
+        Storage::disk('public')->delete($product->image);
 
         return redirect()->route('admin.products.index')
             ->with('success', "Product \"{$product->name}\" deleted.");
-    }
-
-    /**
-     * Data for the shared form. The subcategory list is pre-filled for the
-     * selected category (old input first, then the product's own value),
-     * so the right option is selected without waiting for JavaScript.
-     */
-    private function formData(Product $product): array
-    {
-        $categoryId = (int) old('category_id', $product->category_id);
-
-        return [
-            'product' => $product,
-            'categories' => Category::orderBy('name')->get(['id', 'name', 'slug']),
-            'subcategories' => Subcategory::where('category_id', $categoryId)
-                ->orderBy('name')
-                ->get(['id', 'name']),
-        ];
     }
 }

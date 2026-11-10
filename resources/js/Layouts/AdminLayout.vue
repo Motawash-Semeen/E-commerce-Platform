@@ -3,14 +3,14 @@ import { computed } from 'vue';
 import AppNav from '@/Components/AppNav.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 
-// `inertia: false` = the page is still Blade (converted to Vue in later steps),
-// so the link does a normal page load.
+// Every admin page is a Vue page; only the log viewer (a package UI) needs a full page load.
 const links = computed(() => [
     { label: 'Dashboard', href: route('admin.dashboard'), active: route().current('admin.dashboard') },
-    { label: 'Categories', href: route('admin.categories.index'), active: route().current('admin.categories.*'), inertia: false },
-    { label: 'Subcategories', href: route('admin.subcategories.index'), active: route().current('admin.subcategories.*'), inertia: false },
-    { label: 'Products', href: route('admin.products.index'), active: route().current('admin.products.*'), inertia: false },
-    { label: 'Shop owners', href: route('admin.shop-owners.index'), active: route().current('admin.shop-owners.*'), inertia: false },
+    { label: 'Shops', href: route('admin.shops.index'), active: route().current('admin.shops.*') },
+    { label: 'Products', href: route('admin.products.index'), active: route().current('admin.products.*') },
+    { label: 'Shop owners', href: route('admin.shop-owners.index'), active: route().current('admin.shop-owners.*') },
+    { label: 'Categories', href: route('admin.categories.index'), active: route().current('admin.categories.*') },
+    { label: 'Subcategories', href: route('admin.subcategories.index'), active: route().current('admin.subcategories.*') },
     { label: 'Logs', href: route('log-viewer.index'), active: false, inertia: false },
 ]);
 </script>

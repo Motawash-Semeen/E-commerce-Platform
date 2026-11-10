@@ -7,8 +7,8 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 
 /**
  * Top navigation shared by the Admin, Owner and Public layouts.
- * links: [{ label, href, active, inertia }] — `inertia: false` for pages that are
- * still plain Blade (they need a full page load, not an Inertia visit).
+ * links: [{ label, href, active, inertia }] — `inertia: false` for non-Inertia pages
+ * such as the log viewer (they need a full page load, not an Inertia visit).
  */
 defineProps({
     links: { type: Array, default: () => [] },
@@ -20,7 +20,7 @@ const open = ref(false);
 
 const linkClass = (active) =>
     [
-        'inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium transition',
+        'inline-flex items-center whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition',
         active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
     ].join(' ');
 </script>
@@ -33,14 +33,14 @@ const linkClass = (active) =>
             </Link>
 
             <!-- Desktop links -->
-            <div class="hidden flex-1 items-center gap-1 lg:flex">
+            <div class="hidden flex-1 items-center gap-1 xl:flex">
                 <template v-for="link in links" :key="link.label">
                     <Link v-if="link.inertia !== false" :href="link.href" :class="linkClass(link.active)">{{ link.label }}</Link>
                     <a v-else :href="link.href" :class="linkClass(link.active)">{{ link.label }}</a>
                 </template>
             </div>
 
-            <div class="hidden items-center lg:flex">
+            <div class="hidden items-center xl:flex">
                 <Dropdown v-if="user" align="right" width="48">
                     <template #trigger>
                         <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100">
@@ -69,7 +69,7 @@ const linkClass = (active) =>
             <!-- Mobile toggle -->
             <button
                 type="button"
-                class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden"
+                class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 xl:hidden"
                 :aria-expanded="open"
                 aria-label="Toggle navigation"
                 @click="open = !open"
@@ -82,7 +82,7 @@ const linkClass = (active) =>
         </div>
 
         <!-- Mobile menu -->
-        <div v-show="open" class="space-y-1 border-t border-gray-100 px-4 py-3 lg:hidden">
+        <div v-show="open" class="space-y-1 border-t border-gray-100 px-4 py-3 xl:hidden">
             <template v-for="link in links" :key="link.label">
                 <Link v-if="link.inertia !== false" :href="link.href" :class="linkClass(link.active)" class="flex">{{ link.label }}</Link>
                 <a v-else :href="link.href" :class="linkClass(link.active)" class="flex">{{ link.label }}</a>

@@ -8,23 +8,33 @@ use App\Modules\Category\Http\Requests\UpdateCategoryRequest;
 use App\Modules\Category\Models\Category;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CategoryController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): Response
     {
-        $categories = Category::withCount('subcategories')
-            ->orderBy('name')
-            ->paginate(10);
+        $search = $request->string('search')->trim()->value();
 
-        return view('Category::index', compact('categories'));
+        $categories = Category::withCount(['subcategories', 'products'])
+            ->when($search, fn ($query) => $query->where('name', 'like', "%{$search}%"))
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Category $category) => $category->only(['id', 'name', 'slug', 'subcategories_count', 'products_count']));
+
+        return Inertia::render('Admin/Categories/Index', [
+            'categories' => $categories,
+            'filters' => ['search' => $search],
+        ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('Category::create', ['category' => new Category]);
+        return Inertia::render('Admin/Categories/Create');
     }
 
     public function store(StoreCategoryRequest $request): RedirectResponse
@@ -35,9 +45,11 @@ class CategoryController extends Controller
             ->with('success', "Category \"{$category->name}\" created.");
     }
 
-    public function edit(Category $category): View
+    public function edit(Category $category): Response
     {
-        return view('Category::edit', compact('category'));
+        return Inertia::render('Admin/Categories/Edit', [
+            'category' => $category->only(['id', 'name', 'slug']),
+        ]);
     }
 
     public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
@@ -65,9 +77,8 @@ class CategoryController extends Controller
 
         try {
             $category->delete();
-        } catch (QueryException $e) {
-            // Fallback: a child row was added between the check and the delete,
-            // so the restrictOnDelete foreign key blocked it.
+        } catch (QueryException) {
+            // A child row was added between the check and the delete (restrictOnDelete blocked it).
             return back()->with('error', "Cannot delete \"{$category->name}\" because other records still use it.");
         }
 

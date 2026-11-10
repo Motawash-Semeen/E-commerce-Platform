@@ -42,7 +42,7 @@ class RoleAccessTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Dashboard')
-                ->has('stats', fn (Assert $stats) => $stats->hasAll(['shops', 'owners', 'products'])));
+                ->has('stats', fn (Assert $stats) => $stats->hasAll(['shops', 'owners', 'products', 'listings'])));
         $this->get('/admin/products')->assertOk();
         $this->get('/owner/dashboard')->assertForbidden();
     }
@@ -111,6 +111,12 @@ class RoleAccessTest extends TestCase
             ->get('/owner/dashboard')
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Owner/Dashboard')
-                ->where('shop', ['name' => 'Corner Store', 'slug' => 'corner-store', 'is_active' => false]));
+                ->where('shop', [
+                    'name' => 'Corner Store',
+                    'slug' => 'corner-store',
+                    'is_active' => false,
+                    'listings_count' => 0,
+                    'active_listings_count' => 0,
+                ]));
     }
 }

@@ -14,9 +14,16 @@ class ShopFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),   // a shop owner (the factory default role)
+            'owner_id' => User::factory(),   // a shop owner (the factory default role)
             'name' => fake()->unique()->company(),
+            'description' => fake()->sentence(12),
+            'logo' => null,
             'is_active' => true,
         ];
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => ['is_active' => false]);
     }
 }

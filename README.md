@@ -1,57 +1,36 @@
-# E-commerce Platform
+# E-commerce Platform (multi-shop)
 
-A simple e-commerce app built with **Laravel 12**. One admin manages categories,
-subcategories and products (with images). Visitors browse the shop without logging in.
+A small multi-shop e-commerce management system. The **admin** manages shops, shop owner
+accounts, categories and a **shared product catalog**. **Shop owners** browse that catalog,
+add products to their own shop with their own price, description and thumbnail, and can add
+new products to the catalog. **Customers** (no login) see only products that an active shop
+is selling.
 
-**Built with:** Laravel 12, PHP 8.2+, MySQL, Blade + Bootstrap 5, Laravel Breeze
-(login), L5Modular (modules) and Opcodes Log Viewer.
+**Tech stack:** Laravel 12 · PHP 8.2+ · MySQL / MariaDB · Vue 3 + Inertia.js (Laravel Breeze)
+· Vite · Tailwind CSS · Ziggy · L5Modular (modules) · Opcodes Log Viewer
 
 ## Requirements
 
-- PHP 8.2+ (with `pdo_mysql`, `gd`, `fileinfo`)
-- Composer
-- MySQL 8+ or MariaDB 10.4+
+- PHP 8.2+ with the `pdo_mysql`, `gd` and `fileinfo` extensions
+- Composer 2
+- MySQL 8 (or MariaDB 10.4+)
+- Node.js 20+ and npm
 
-No Node.js or npm needed: Bootstrap is loaded from a CDN.
-
-## Database
-
-- **Database name:** `ecommerce_platform`
-- **SQL file:** [`database/export/ecommerce_platform.sql`](database/export/ecommerce_platform.sql)
-- **Product images for the SQL file:** `database/export/product-images/`
-
-The SQL file contains all the tables and the demo data: 1 admin, 3 categories,
-6 subcategories and 14 products.
-
-| Table | Main columns | Notes |
-|-------|--------------|-------|
-| `categories` | `name`, `slug` | name is unique |
-| `subcategories` | `category_id`, `name`, `slug` | name is unique within its category |
-| `products` | `category_id`, `subcategory_id`, `name`, `slug`, `description`, `image`, `old_price`, `new_price` | `image` is a file path |
-| `users` | `name`, `email`, `password` | the admin account |
-
-A category can't be deleted while it has subcategories or products, and a
-subcategory can't be deleted while it has products. The database enforces this
-as well as the app. The other tables (`sessions`, `cache`, `jobs`, `migrations`…)
-are Laravel's standard ones.
-
-## Setup
-
-**1. Install and configure**
+## Setup (fresh clone)
 
 ```bash
+git clone https://github.com/Motawash-Semeen/E-commerce-Platform.git
+cd E-commerce-Platform
 composer install
-cp .env.example .env
+cp .env.example .env          # Windows: copy .env.example .env
 php artisan key:generate
 ```
 
-Create the database:
+Create an empty database, then check the `DB_*` values in `.env`:
 
 ```sql
 CREATE DATABASE ecommerce_platform CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
-
-Check the connection in `.env`:
 
 ```dotenv
 DB_DATABASE=ecommerce_platform
@@ -59,88 +38,101 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-**2. Fill the database (choose one)**
-
-- **Option A: run migrations and seeders**
-
-  ```bash
-  php artisan migrate --seed
-  ```
-
-- **Option B: import the SQL file**
-
-  ```bash
-  mysql -u root -p ecommerce_platform < database/export/ecommerce_platform.sql
-  ```
-
-  Or in phpMyAdmin: select `ecommerce_platform`, then **Import** the file.
-  Then copy the images from `database/export/product-images/` into
-  `storage/app/public/products/`.
-
-**3. Run it**
+Then:
 
 ```bash
+php artisan migrate --seed
 php artisan storage:link
+npm install
+npm run build
 php artisan serve
 ```
 
-- Shop: <http://127.0.0.1:8000>
-- Admin: <http://127.0.0.1:8000/admin/dashboard>
+Open <http://localhost:8000>.
 
-## Logins and roles
+**Dev mode (optional):** run `npm run dev` in a second terminal for hot reload instead of `npm run build`.
 
-| Email | Password | Role |
-|-------|----------|------|
-| `admin@example.com` | `password` | admin |
+**No terminal for migrations?** `database/export/ecommerce_platform.sql` holds the same tables
+and demo data. Import it (phpMyAdmin > Import, or `mysql -u root -p ecommerce_platform < database/export/ecommerce_platform.sql`),
+then copy `database/export/product-images/*` into `storage/app/public/products/`.
 
-There are two roles. **Admins** use `/admin` (dashboard, catalogue, logs);
-**shop owners** use `/owner`. Each role gets a 403 page in the other's area, and
-after login each lands on its own dashboard. Disabled accounts can't log in.
-Registration is turned off. To change the admin's login details, set
-`ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` before seeding.
+## Demo logins
 
-## Features
+All demo accounts use the password `password`.
 
-1. **Categories:** add, edit, delete and list them, with a subcategory count.
-2. **Subcategories:** each belongs to a category, with the same actions.
-3. **Products:** name, description, old and new price, category, subcategory and
-   an image. The subcategory list updates when you pick a category.
-4. **Public shop:** products grouped by "Category › Subcategory", plus a page for
-   each product.
-5. **Roles and security:** admins and shop owners each have their own area and
-   dashboard; every form is validated and CSRF-protected.
-6. **Log viewer:** the admin can read the app logs at `/admin/log-viewer`
-   (the **Logs** link in the menu).
+| Email | Role | What to try |
+|-------|------|-------------|
+| `admin@example.com` | admin | Create a shop owner, then a shop for them. Add a catalog product. Try deleting a product that a shop sells (blocked). |
+| `owner1@example.com` | shop owner (Urban Bazaar) | Browse catalog > **Add to my shop** with your own price. Edit or hide a listing. Create a product with "Also add to my shop". |
+| `owner2@example.com` | shop owner (Corner Store) | See owner 1's products in the catalog. Open a listing of another shop by URL (403). |
 
-## Project structure
+As a customer (logged out): open a shop from the home page. "Classic Cotton Crew Tee" costs
+Tk 899 in Urban Bazaar and Tk 990 in Corner Store. "Rattan Pendant Light" is in the catalog
+but no shop sells it, so customers never see it. Corner Store's frying pan listing is hidden
+(inactive).
 
-Each feature has its own module in `app/Modules`, which holds its controller,
-validation, model, migration, views and routes:
+The admin login comes from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env` (set them before seeding).
 
-```text
-app/Modules/
-├── Category/      # admin: categories
-├── Subcategory/   # admin: subcategories
-├── Product/       # admin: products and images
-└── Shop/          # public pages
+## Features by requirement
 
-resources/views/layouts/   # shared page layout
-public/css/shop.css        # the design
-database/seeders/          # admin and demo data
-database/export/           # SQL file and its images
-tests/Feature/             # automated tests
-```
+| Requirement | Where |
+|-------------|-------|
+| Admin authentication | Breeze login; `role:admin` on every `/admin` route; registration disabled; inactive accounts can't log in |
+| Shop management (CRUD) | Admin > **Shops**: name, owner, description, logo, active |
+| Product management (CRUD) | Admin > **Products**: the shared catalog, with image, category › subcategory and suggested price |
+| Shop owner accounts | Admin > **Shop owners**: create, edit (optional new password), activate/deactivate, delete (blocked while they own a shop) |
+| Owners browse the catalog and add products | Owner > **Browse catalog** > **Add to my shop** |
+| Products by the admin or other owners are in the catalog | Every catalog product is visible to every owner |
+| Owners create their own products | Owner > **My products** > **Create product** (joins the catalog right away; optional "Also add to my shop") |
+| Owners set price, details and thumbnail per shop | Owner > **My listings** > Edit: stored in `shop_product`, so other shops aren't affected |
+| Customers only see assigned products | Public pages read only through `ShopProduct::visible()` (active listing in an active shop) |
+| Shop-specific info, prices and thumbnails | Shop and product pages show the listing's price, description and thumbnail (falling back to the catalog's) |
 
-## How it works
+## Database design
 
-- **Validation** is done in Form Request classes, so controllers stay short.
-- **Web addresses use slugs** made from the name, e.g. `/products/led-desk-lamp`.
-- **Images** are saved with random file names. Old images are deleted when a
-  product's image is replaced or the product is deleted.
-- **Deleting** a category or subcategory that is still in use shows an error
-  message instead of breaking the data.
-- **Security:** login is required for `/admin` and the log viewer, every form has
-  CSRF protection, and all output is escaped.
+| Table | Purpose |
+|-------|---------|
+| `users` | Breeze users plus `role` (`admin` / `shop_owner`) and `is_active` |
+| `categories`, `subcategories` | Catalog groups (subcategory names are unique within a category) |
+| `shops` | `owner_id` (unique: one shop per owner), name, slug, description, logo, is_active |
+| `products` | The shared catalog: category, subcategory, `created_by`, name, slug, description, image, suggested `new_price` / `old_price` |
+| `shop_product` | A shop's **listing** of a catalog product (model `ShopProduct`) |
+
+**`shop_product` (the pivot):** one row per shop and product (`unique(shop_id, product_id)`)
+with that shop's `price`, `old_price`, optional `description` and `thumbnail` (which override
+the catalog's), and `is_active`. Editing a listing never touches the catalog product, and two
+shops can sell the same product at different prices.
+
+Deleting is restricted where data depends on it: a category or subcategory in use, a product
+that a shop sells, and an owner who has a shop can't be deleted. Deleting a shop deletes its
+listings (cascade) and their image files.
+
+## Design decisions
+
+- **Inertia instead of a separate API:** Laravel keeps routing, validation, policies and
+  session auth; Vue renders every page. No token auth to secure.
+- **Shared catalog + per-shop pivot:** products are created once; each shop's price and
+  details live in `shop_product`.
+- **One shop per owner:** enforced by a unique `owner_id`. An owner's shop is always
+  `auth()->user()->shop`; no owner route accepts a shop id.
+- **Owners can't delete catalog products:** other shops may sell them. Owners remove their
+  own listing instead; only the admin deletes unlisted products.
+- **Restrict on delete:** foreign keys stop deletes that would break data; the app shows a
+  friendly message first.
+- **Modules:** each feature lives in `app/Modules/<Feature>` (controllers, requests, routes,
+  migrations) via L5Modular. Vue pages are in `resources/js/Pages/{Admin,Owner,Public}`.
+
+## Security
+
+- `auth` + `role` middleware on every admin and owner route; registration disabled; inactive users blocked at login
+- Policies: `ProductPolicy` (owners edit only products they created; the admin deletes only unlisted products) and `ShopProductPolicy` (only the listing's shop owner edits or removes it, otherwise 403)
+- `role`, `created_by`, `owner_id` and `shop_id` are never mass-assignable or read from owner input
+- Validation only in Form Request classes; `$fillable` on every model; Eloquent and route model binding only (no raw SQL)
+- CSRF handled by Inertia/axios (XSRF-TOKEN cookie)
+- No `v-html`: all output is escaped by Vue; descriptions use `white-space: pre-line`
+- Inertia props carry only the fields each page needs (shared user: id, name, email, role)
+- Uploads: image mime and size checked, stored with random names, old files deleted on replace or delete
+- **Production:** set `APP_ENV=production`, `APP_DEBUG=false` and a strong `ADMIN_PASSWORD`
 
 ## Tests
 
@@ -148,9 +140,16 @@ tests/Feature/             # automated tests
 php artisan test
 ```
 
-The tests use a separate in-memory database, so your data is never touched.
+The tests run on in-memory SQLite (see `phpunit.xml`), so no test database is needed. They cover
+the 13 required cases (role access, inactive login, product and listing policies, catalog
+sharing, duplicate listings, subcategory/category mismatch, customer visibility, per-shop prices,
+blocked delete, image upload) and more.
 
-## Going live
+## Troubleshooting
 
-- Set `APP_DEBUG=false` and `APP_ENV=production` in `.env`.
-- Change the admin password. The SQL file comes with the demo password.
+| Problem | Fix |
+|---------|-----|
+| Images don't show | `php artisan storage:link`, and make sure `APP_URL` matches the address you open (default `http://localhost:8000`) |
+| "Vite manifest not found" | `npm install` then `npm run build` |
+| Database error on start | Check the `DB_*` values in `.env` and that the database exists |
+| Start over with fresh demo data | `php artisan migrate:fresh --seed` |

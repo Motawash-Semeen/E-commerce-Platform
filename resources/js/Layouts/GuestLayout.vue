@@ -7,7 +7,7 @@ import BrandMark from '@/Components/BrandMark.vue';
 
 <template>
     <div class="flex min-h-screen flex-col items-center bg-gray-50 px-4 pt-10 sm:justify-center sm:pt-0">
-        <Link href="/">
+        <Link :href="route('home')">
             <BrandMark />
         </Link>
 

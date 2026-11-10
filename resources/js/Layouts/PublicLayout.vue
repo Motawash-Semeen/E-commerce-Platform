@@ -5,11 +5,10 @@ import AppNav from '@/Components/AppNav.vue';
 import BrandMark from '@/Components/BrandMark.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 
-// Customer-facing layout. The shop pages become Vue in Step 9; until then
-// "Shops" points at the current home page with a normal page load.
+// Customer-facing layout (guests and logged-in users alike).
 const page = usePage();
 const links = computed(() => {
-    const items = [{ label: 'Shops', href: '/', active: false, inertia: false }];
+    const items = [{ label: 'All shops', href: route('home'), active: route().current('home') }];
 
     if (page.props.auth.user) {
         items.push({ label: 'My dashboard', href: route('dashboard'), active: false });

@@ -6,6 +6,7 @@ use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ShopOwnerTest extends TestCase
@@ -53,13 +54,21 @@ class ShopOwnerTest extends TestCase
 
         $this->get(route('admin.shop-owners.index'))
             ->assertOk()
-            ->assertSee('Aaron With Shop')
-            ->assertSee('Rina Fashion House')
-            ->assertSee('Karim Without Shop')
-            ->assertSee('No shop')
-            ->assertSee('Disabled')
-            ->assertDontSee($this->admin->email)
-            ->assertSee('page-link', false);
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/ShopOwners/Index')
+                ->where('owners.total', 12)            // owners only: the admin isn't listed
+                ->where('owners.last_page', 2)
+                ->has('owners.data', 10)
+                ->where('owners.data.0', [
+                    'id' => $withShop->id,
+                    'name' => 'Aaron With Shop',
+                    'email' => $withShop->email,
+                    'is_active' => true,
+                    'shop' => 'Rina Fashion House',
+                ])
+                ->where('owners.data.1.name', 'Karim Without Shop')
+                ->where('owners.data.1.shop', null)
+                ->where('owners.data.1.is_active', false));
     }
 
     public function test_create_hashes_the_password_and_forces_the_shop_owner_role(): void

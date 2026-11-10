@@ -3,9 +3,11 @@ import { computed } from 'vue';
 import AppNav from '@/Components/AppNav.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
 
-// Owner links grow in later steps (catalog, my products, listings).
 const links = computed(() => [
     { label: 'Dashboard', href: route('owner.dashboard'), active: route().current('owner.dashboard') },
+    { label: 'Browse catalog', href: route('owner.catalog.index'), active: route().current('owner.catalog.*') },
+    { label: 'My listings', href: route('owner.listings.index'), active: route().current('owner.listings.*') },
+    { label: 'My products', href: route('owner.products.index'), active: route().current('owner.products.*') },
 ]);
 </script>
 

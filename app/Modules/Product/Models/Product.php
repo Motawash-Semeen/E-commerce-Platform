@@ -3,6 +3,9 @@
 namespace App\Modules\Product\Models;
 
 use App\Models\Concerns\HasSlug;
+use App\Models\Shop;
+use App\Models\ShopProduct;
+use App\Models\User;
 use App\Modules\Category\Models\Category;
 use App\Modules\Subcategory\Models\Subcategory;
 use Database\Factories\ProductFactory;
@@ -10,11 +13,20 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
+/**
+ * A product in the shared catalog. Any shop can list it with its own price.
+ */
 class Product extends Model
 {
     use HasFactory, HasSlug;
 
+    /**
+     * created_by is left out: the controller sets it to auth()->id().
+     */
     protected $fillable = [
         'category_id',
         'subcategory_id',
@@ -42,27 +54,11 @@ class Product extends Model
     }
 
     /**
-     * Public URL of the image ($product->image_url), or null if there is none.
-     * asset() uses the current host, so it works with any APP_URL.
+     * Full public URL of the catalog image ($product->image_url), or null.
      */
     protected function imageUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->image ? asset('storage/'.$this->image) : null);
-    }
-
-    /**
-     * Whole-number discount ($product->discount_percent), or null when the
-     * product isn't reduced (no old price, or old price not above new price).
-     */
-    protected function discountPercent(): Attribute
-    {
-        return Attribute::get(function () {
-            if ($this->old_price === null || (float) $this->old_price <= (float) $this->new_price) {
-                return null;
-            }
-
-            return (int) round((1 - $this->new_price / $this->old_price) * 100);
-        });
+        return Attribute::get(fn () => $this->image ? Storage::disk('public')->url($this->image) : null);
     }
 
     public function category(): BelongsTo
@@ -73,5 +69,26 @@ class Product extends Model
     public function subcategory(): BelongsTo
     {
         return $this->belongsTo(Subcategory::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Every shop's listing of this product.
+     */
+    public function listings(): HasMany
+    {
+        return $this->hasMany(ShopProduct::class);
+    }
+
+    public function shops(): BelongsToMany
+    {
+        return $this->belongsToMany(Shop::class, 'shop_product')
+            ->using(ShopProduct::class)
+            ->withPivot(['id', 'price', 'old_price', 'description', 'thumbnail', 'is_active'])
+            ->withTimestamps();
     }
 }
