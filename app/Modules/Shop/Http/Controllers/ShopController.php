@@ -5,8 +5,7 @@ namespace App\Modules\Shop\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use App\Models\User;
-use App\Modules\Shop\Http\Requests\StoreShopRequest;
-use App\Modules\Shop\Http\Requests\UpdateShopRequest;
+use App\Modules\Shop\Http\Requests\ShopRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,7 +52,7 @@ class ShopController extends Controller
         ]);
     }
 
-    public function store(StoreShopRequest $request): RedirectResponse
+    public function store(ShopRequest $request): RedirectResponse
     {
         $shop = new Shop($request->safe()->only(['name', 'description']));
         $shop->owner_id = $request->validated('owner_id');   // validated: a shop owner without a shop
@@ -81,7 +80,7 @@ class ShopController extends Controller
         ]);
     }
 
-    public function update(UpdateShopRequest $request, Shop $shop): RedirectResponse
+    public function update(ShopRequest $request, Shop $shop): RedirectResponse
     {
         $shop->fill($request->safe()->only(['name', 'description']));
         $shop->owner_id = $request->validated('owner_id');

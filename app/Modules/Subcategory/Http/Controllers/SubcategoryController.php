@@ -4,8 +4,7 @@ namespace App\Modules\Subcategory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Category\Models\Category;
-use App\Modules\Subcategory\Http\Requests\StoreSubcategoryRequest;
-use App\Modules\Subcategory\Http\Requests\UpdateSubcategoryRequest;
+use App\Modules\Subcategory\Http\Requests\SubcategoryRequest;
 use App\Modules\Subcategory\Models\Subcategory;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -53,7 +52,7 @@ class SubcategoryController extends Controller
         ]);
     }
 
-    public function store(StoreSubcategoryRequest $request): RedirectResponse
+    public function store(SubcategoryRequest $request): RedirectResponse
     {
         $subcategory = Subcategory::create($request->validated());
 
@@ -69,7 +68,7 @@ class SubcategoryController extends Controller
         ]);
     }
 
-    public function update(UpdateSubcategoryRequest $request, Subcategory $subcategory): RedirectResponse
+    public function update(SubcategoryRequest $request, Subcategory $subcategory): RedirectResponse
     {
         DB::transaction(function () use ($request, $subcategory) {
             $subcategory->update($request->validated());

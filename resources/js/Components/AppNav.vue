@@ -21,14 +21,14 @@ const open = ref(false);
 const linkClass = (active) =>
     [
         'inline-flex items-center whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition',
-        active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+        active ? 'bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 ring-1 ring-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
     ].join(' ');
 </script>
 
 <template>
-    <nav class="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
+    <nav class="sticky top-0 z-40 border-b border-gray-200/80 bg-white/80 backdrop-blur-lg">
         <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <Link :href="user ? route('dashboard') : '/'" class="shrink-0">
+            <Link :href="user ? route('dashboard') : route('home')" class="group shrink-0">
                 <BrandMark />
             </Link>
 
@@ -61,7 +61,7 @@ const linkClass = (active) =>
                         <DropdownLink :href="route('logout')" method="post" as="button">Log out</DropdownLink>
                     </template>
                 </Dropdown>
-                <Link v-else :href="route('login')" class="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
+                <Link v-else :href="route('login')" class="btn-primary">
                     Log in
                 </Link>
             </div>

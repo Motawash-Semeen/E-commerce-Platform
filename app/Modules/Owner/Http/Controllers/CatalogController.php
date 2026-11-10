@@ -4,7 +4,7 @@ namespace App\Modules\Owner\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Category\Models\Category;
-use App\Modules\Owner\Http\Requests\StoreListingRequest;
+use App\Modules\Owner\Http\Requests\ListingRequest;
 use App\Modules\Product\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -71,7 +71,7 @@ class CatalogController extends Controller
         ]);
     }
 
-    public function store(StoreListingRequest $request, Product $product): RedirectResponse
+    public function store(ListingRequest $request, Product $product): RedirectResponse
     {
         $listing = $request->user()->shop->listings()->make(
             $request->safe()->only(['price', 'old_price', 'description'])

@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import OwnerLayout from '@/Layouts/OwnerLayout.vue';
+import AnimatedNumber from '@/Components/AnimatedNumber.vue';
 import PageHeader from '@/Components/PageHeader.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 
@@ -23,34 +24,34 @@ const user = usePage().props.auth.user;
         </template>
 
         <template v-if="shop">
-            <div class="card relative overflow-hidden p-6">
-                <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
-                <p class="text-sm font-medium text-gray-500">Your shop</p>
-                <div class="mt-2 flex flex-wrap items-center gap-3">
-                    <h2 class="text-2xl font-bold text-gray-900">{{ shop.name }}</h2>
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 bg-[length:200%_200%] p-6 text-white shadow-xl shadow-indigo-500/20 animate-gradient">
+                <div class="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/15 blur-2xl animate-blob" aria-hidden="true" />
+                <p class="relative text-sm font-medium text-indigo-100">Your shop</p>
+                <div class="relative mt-2 flex flex-wrap items-center gap-3">
+                    <h2 class="text-3xl font-extrabold">{{ shop.name }}</h2>
                     <StatusBadge :active="shop.is_active" />
                 </div>
-                <p v-if="!shop.is_active" class="mt-3 text-sm text-amber-700">
+                <p v-if="!shop.is_active" class="relative mt-3 text-sm font-medium text-amber-100">
                     Your shop is inactive, so customers can't see it. Contact the admin to activate it.
                 </p>
             </div>
 
             <div class="mt-6 grid gap-4 sm:grid-cols-3">
-                <div class="card p-6">
+                <div class="card card-hover animate-fade-up p-6 [animation-delay:80ms]">
                     <p class="text-sm font-medium text-gray-500">Products in my shop</p>
-                    <p class="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">{{ shop.listings_count }}</p>
+                    <p class="mt-2 text-4xl font-extrabold tracking-tight text-gray-900"><AnimatedNumber :value="shop.listings_count" /></p>
                 </div>
-                <div class="card p-6">
+                <div class="card card-hover animate-fade-up p-6 [animation-delay:160ms]">
                     <p class="text-sm font-medium text-gray-500">Visible to customers</p>
-                    <p class="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">{{ shop.is_active ? shop.active_listings_count : 0 }}</p>
+                    <p class="mt-2 text-4xl font-extrabold tracking-tight text-gray-900"><AnimatedNumber :value="shop.is_active ? shop.active_listings_count : 0" /></p>
                 </div>
-                <div class="card p-6">
+                <div class="card card-hover animate-fade-up p-6 [animation-delay:240ms]">
                     <p class="text-sm font-medium text-gray-500">Products I added to the catalog</p>
-                    <p class="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">{{ myProductsCount }}</p>
+                    <p class="mt-2 text-4xl font-extrabold tracking-tight text-gray-900"><AnimatedNumber :value="myProductsCount" /></p>
                 </div>
             </div>
 
-            <div class="card mt-6 p-6">
+            <div class="card mt-6 animate-fade-up p-6 [animation-delay:320ms]">
                 <h2 class="text-base font-semibold text-gray-900">Quick links</h2>
                 <div class="mt-4 flex flex-wrap gap-2">
                     <Link :href="route('owner.catalog.index')" class="btn-primary">Browse catalog</Link>

@@ -4,7 +4,7 @@ namespace App\Modules\Owner\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\ShopProduct;
-use App\Modules\Owner\Http\Requests\UpdateListingRequest;
+use App\Modules\Owner\Http\Requests\ListingRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -68,9 +68,9 @@ class ListingController extends Controller
         ]);
     }
 
-    public function update(UpdateListingRequest $request, ShopProduct $listing): RedirectResponse
+    public function update(ListingRequest $request, ShopProduct $listing): RedirectResponse
     {
-        // UpdateListingRequest already checked ShopProductPolicy@update.
+        // ListingRequest already checked ShopProductPolicy@update.
         $listing->fill($request->safe()->only(['price', 'old_price', 'description']));
         $listing->is_active = $request->boolean('is_active');
 

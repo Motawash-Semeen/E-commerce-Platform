@@ -12,7 +12,7 @@ watch(flash, () => (hidden.value = false), { deep: true });
 </script>
 
 <template>
-    <div v-if="!hidden && (flash.success || flash.error)" class="mb-6">
+    <div v-if="!hidden && (flash.success || flash.error)" class="mb-6 animate-fade-up">
         <div
             v-if="flash.success"
             role="status"

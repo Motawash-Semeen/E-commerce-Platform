@@ -65,11 +65,11 @@ class StorefrontController extends Controller
 
         // "Category › Subcategory" sections, sorted by category then subcategory name.
         $sections = $listings
-            ->sortBy([
-                fn ($a, $b) => strcmp($a->product->category->name, $b->product->category->name),
-                fn ($a, $b) => strcmp($a->product->subcategory->name, $b->product->subcategory->name),
-                fn ($a, $b) => strcmp($a->product->name, $b->product->name),
-            ])
+            ->sortBy(fn (ShopProduct $listing) => implode('|', [
+                $listing->product->category->name,
+                $listing->product->subcategory->name,
+                $listing->product->name,
+            ]))
             ->groupBy('product.subcategory_id')
             ->map(fn ($group) => [
                 'category' => $group->first()->product->category->name,

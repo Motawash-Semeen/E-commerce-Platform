@@ -3,22 +3,26 @@
 @tailwind utilities;
 
 /*
- * A few shared classes so every page (admin, owner, public) looks the same.
- * Built only from Tailwind utilities.
+ * Shared classes so every page (admin, owner, public) looks the same.
+ * Built only from Tailwind utilities. Animations live in tailwind.config.js.
  */
 @layer components {
     .card {
-        @apply rounded-2xl border border-gray-200 bg-white shadow-sm;
+        @apply rounded-2xl border border-gray-200/80 bg-white shadow-sm;
+    }
+    /* Cards that are links: lift and glow on hover. */
+    .card-hover {
+        @apply transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/10;
     }
 
     .btn {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
     }
     .btn-primary {
-        @apply btn bg-indigo-600 text-white shadow-sm hover:bg-indigo-500;
+        @apply btn bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/40;
     }
     .btn-secondary {
-        @apply btn border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50;
+        @apply btn border border-gray-300 bg-white text-gray-700 shadow-sm hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700;
     }
     .btn-danger {
         @apply btn bg-red-600 text-white shadow-sm hover:bg-red-500 focus:ring-red-500;
@@ -31,7 +35,7 @@
         @apply block text-sm font-medium text-gray-700;
     }
     .form-input {
-        @apply mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm;
+        @apply mt-1 block w-full rounded-lg border-gray-300 shadow-sm transition focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm;
     }
     .form-hint {
         @apply mt-1 text-xs text-gray-500;
@@ -46,5 +50,17 @@
 
     .badge {
         @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    }
+
+    .text-gradient {
+        @apply bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 bg-clip-text text-transparent;
+    }
+}
+
+/* People who ask their system for less motion get none. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
     }
 }

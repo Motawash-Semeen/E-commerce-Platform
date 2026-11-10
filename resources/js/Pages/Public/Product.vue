@@ -27,17 +27,17 @@ const discount = computed(() => discountPercent(props.product.price, props.produ
         </nav>
 
         <div class="card mt-4 grid overflow-hidden md:grid-cols-2">
-            <div class="relative bg-gray-100">
-                <img :src="product.image_url" :alt="product.name" class="aspect-square h-full w-full object-cover" />
-                <span v-if="discount" class="badge absolute left-4 top-4 bg-rose-500 px-3 py-1 text-sm text-white shadow">-{{ discount }}%</span>
+            <div class="group relative overflow-hidden bg-gray-100">
+                <img :src="product.image_url" :alt="product.name" class="aspect-square h-full w-full animate-fade-in object-cover transition duration-700 group-hover:scale-105" />
+                <span v-if="discount" class="badge absolute left-4 top-4 animate-fade-up bg-gradient-to-r from-rose-500 to-pink-500 px-3 py-1 text-sm text-white shadow-lg">-{{ discount }}%</span>
             </div>
 
-            <div class="flex flex-col p-6 sm:p-10">
+            <div class="flex animate-fade-up flex-col p-6 [animation-delay:120ms] sm:p-10">
                 <p class="text-sm font-medium text-indigo-600">{{ product.category }} › {{ product.subcategory }}</p>
                 <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">{{ product.name }}</h1>
 
                 <div class="mt-5 flex items-baseline gap-3">
-                    <span class="text-3xl font-bold text-gray-900">{{ formatPrice(product.price) }}</span>
+                    <span class="text-gradient text-4xl font-extrabold">{{ formatPrice(product.price) }}</span>
                     <span v-if="discount" class="text-lg text-gray-400 line-through">{{ formatPrice(product.old_price) }}</span>
                 </div>
 

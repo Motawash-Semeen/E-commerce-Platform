@@ -6,16 +6,19 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Used by both the admin and shop owners to add a catalog product.
+ * Catalog product create and update, shared by the admin and shop owners.
  */
-class StoreProductRequest extends FormRequest
+class ProductRequest extends FormRequest
 {
     /**
-     * Access is already limited by the route middleware (role:admin or role:shop_owner).
+     * Creating: the route's role middleware is enough. Updating: ProductPolicy@update
+     * (the admin, or the shop owner who created the product).
      */
     public function authorize(): bool
     {
-        return true;
+        $product = $this->route('product');
+
+        return ! $product || $this->user()->can('update', $product);
     }
 
     public function rules(): array
@@ -23,23 +26,20 @@ class StoreProductRequest extends FormRequest
         return [
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'subcategory_id' => [
-                'required',
-                'integer',
+                'required', 'integer',
                 // The subcategory must belong to the selected category.
-                Rule::exists('subcategories', 'id')
-                    ->where('category_id', $this->integer('category_id')),
+                Rule::exists('subcategories', 'id')->where('category_id', $this->integer('category_id')),
             ],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['required', 'string', 'max:5000'],
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            // Required for a new product; on update an empty field keeps the current image.
+            'image' => [$this->route('product') ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'old_price' => ['nullable', 'numeric', 'min:0', 'max:99999999'],
             'new_price' => [
                 'required', 'numeric', 'min:0', 'max:99999999',
-                // Only compare when an old price was given.
                 Rule::when($this->filled('old_price'), ['lte:old_price']),
             ],
-            // Owner form only: "Also add to my shop". Ignored for the admin.
-            'add_to_shop' => ['sometimes', 'boolean'],
+            'add_to_shop' => ['sometimes', 'boolean'],   // owner create form only
         ];
     }
 
@@ -54,10 +54,6 @@ class StoreProductRequest extends FormRequest
 
     public function attributes(): array
     {
-        return [
-            'category_id' => 'category',
-            'subcategory_id' => 'subcategory',
-            'new_price' => 'price',
-        ];
+        return ['category_id' => 'category', 'subcategory_id' => 'subcategory', 'new_price' => 'price'];
     }
 }

@@ -4,8 +4,7 @@ namespace App\Modules\ShopOwner\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Modules\ShopOwner\Http\Requests\StoreShopOwnerRequest;
-use App\Modules\ShopOwner\Http\Requests\UpdateShopOwnerRequest;
+use App\Modules\ShopOwner\Http\Requests\ShopOwnerRequest;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,7 +50,7 @@ class ShopOwnerController extends Controller
         return Inertia::render('Admin/ShopOwners/Create');
     }
 
-    public function store(StoreShopOwnerRequest $request): RedirectResponse
+    public function store(ShopOwnerRequest $request): RedirectResponse
     {
         $owner = new User($request->safe()->only(['name', 'email']));
         $owner->password = Hash::make($request->validated('password'));
@@ -70,7 +69,7 @@ class ShopOwnerController extends Controller
         ]);
     }
 
-    public function update(UpdateShopOwnerRequest $request, User $shopOwner): RedirectResponse
+    public function update(ShopOwnerRequest $request, User $shopOwner): RedirectResponse
     {
         $shopOwner->fill($request->safe()->only(['name', 'email']));
         $shopOwner->is_active = $request->boolean('is_active');

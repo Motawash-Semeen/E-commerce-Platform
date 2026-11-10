@@ -4,8 +4,7 @@ namespace App\Modules\Product\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Category\Models\Category;
-use App\Modules\Product\Http\Requests\StoreProductRequest;
-use App\Modules\Product\Http\Requests\UpdateProductRequest;
+use App\Modules\Product\Http\Requests\ProductRequest;
 use App\Modules\Product\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,7 +57,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(StoreProductRequest $request): RedirectResponse
+    public function store(ProductRequest $request): RedirectResponse
     {
         $product = new Product($request->safe()->except(['image', 'add_to_shop']));
         // store() gives the file a random name; the client's file name is never used.
@@ -81,9 +80,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
+    public function update(ProductRequest $request, Product $product): RedirectResponse
     {
-        // UpdateProductRequest already checked ProductPolicy@update.
+        // ProductRequest already checked ProductPolicy@update.
         $product->fill($request->safe()->except(['image', 'add_to_shop']));
 
         $oldImage = null;

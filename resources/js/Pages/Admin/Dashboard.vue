@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import AnimatedNumber from '@/Components/AnimatedNumber.vue';
 import PageHeader from '@/Components/PageHeader.vue';
 
 defineProps({
@@ -38,20 +39,22 @@ const quickLinks = [
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <component
                 :is="card.route ? Link : 'div'"
-                v-for="card in cards"
+                v-for="(card, i) in cards"
                 :key="card.key"
                 :href="card.route ? route(card.route) : undefined"
-                class="card group relative overflow-hidden p-6 transition"
-                :class="{ 'hover:-translate-y-0.5 hover:shadow-md': card.route }"
+                class="card group relative animate-fade-up overflow-hidden p-6"
+                :class="{ 'card-hover': card.route }"
+                :style="{ animationDelay: `${i * 80}ms` }"
             >
+                <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br opacity-20 blur-xl transition duration-500 group-hover:scale-150 group-hover:opacity-30" :class="card.tone" aria-hidden="true" />
                 <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r" :class="card.tone" />
                 <p class="text-sm font-medium text-gray-500">{{ card.label }}</p>
-                <p class="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">{{ stats[card.key] }}</p>
-                <p class="mt-1 text-xs text-gray-400" :class="{ 'group-hover:text-indigo-600': card.route }">{{ card.hint }}</p>
+                <p class="mt-2 text-4xl font-extrabold tracking-tight text-gray-900"><AnimatedNumber :value="stats[card.key]" /></p>
+                <p class="mt-1 text-xs text-gray-400" :class="{ 'group-hover:text-indigo-600': card.route }">{{ card.hint }} <span v-if="card.route" aria-hidden="true">→</span></p>
             </component>
         </div>
 
-        <div class="card mt-6 p-6">
+        <div class="card mt-6 animate-fade-up p-6 [animation-delay:350ms]">
             <h2 class="text-base font-semibold text-gray-900">Quick links</h2>
             <div class="mt-4 flex flex-wrap gap-2">
                 <Link

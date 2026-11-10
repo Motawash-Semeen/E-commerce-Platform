@@ -3,8 +3,7 @@
 namespace App\Modules\Category\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Category\Http\Requests\StoreCategoryRequest;
-use App\Modules\Category\Http\Requests\UpdateCategoryRequest;
+use App\Modules\Category\Http\Requests\CategoryRequest;
 use App\Modules\Category\Models\Category;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -37,7 +36,7 @@ class CategoryController extends Controller
         return Inertia::render('Admin/Categories/Create');
     }
 
-    public function store(StoreCategoryRequest $request): RedirectResponse
+    public function store(CategoryRequest $request): RedirectResponse
     {
         $category = Category::create($request->validated());
 
@@ -52,7 +51,7 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
+    public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
         $category->update($request->validated());
 

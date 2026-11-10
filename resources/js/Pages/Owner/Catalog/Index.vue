@@ -44,9 +44,9 @@ watch(category, (value) => {
         </div>
 
         <div v-if="products.data.length" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <div v-for="product in products.data" :key="product.id" class="card group flex flex-col overflow-hidden">
+            <div v-for="(product, i) in products.data" :key="product.id" class="card card-hover group flex animate-fade-up flex-col overflow-hidden" :style="{ animationDelay: `${i * 50}ms` }">
                 <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
-                    <img :src="product.image_url" :alt="product.name" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    <img :src="product.image_url" :alt="product.name" class="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
                     <span class="badge absolute left-3 top-3 bg-white/90 text-gray-700 shadow-sm">{{ product.category }}</span>
                 </div>
                 <div class="flex flex-1 flex-col p-4">
