@@ -8,7 +8,6 @@ use App\Modules\Product\Http\Requests\ProductRequest;
 use App\Modules\Product\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -82,7 +81,6 @@ class ProductController extends Controller
 
     public function update(ProductRequest $request, Product $product): RedirectResponse
     {
-        // ProductRequest already checked ProductPolicy@update.
         $product->fill($request->safe()->except(['image', 'add_to_shop']));
 
         $oldImage = null;
@@ -104,12 +102,10 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
-        // Friendly message first; the policy (and the restrictOnDelete key) back it up.
+        // A product that a shop sells can't be deleted (the foreign key blocks it too).
         if ($product->listings()->exists()) {
             return back()->with('error', "Cannot delete \"{$product->name}\": it's listed in a shop. Remove it from all shops first.");
         }
-
-        Gate::authorize('delete', $product);
 
         $product->delete();
         Storage::disk('public')->delete($product->image);

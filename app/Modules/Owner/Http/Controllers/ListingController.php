@@ -7,7 +7,6 @@ use App\Models\ShopProduct;
 use App\Modules\Owner\Http\Requests\ListingRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,10 +45,9 @@ class ListingController extends Controller
         ]);
     }
 
-    public function edit(ShopProduct $listing): Response
+    public function edit(Request $request, ShopProduct $listing): Response
     {
-        // ShopProductPolicy: 403 for another shop's listing.
-        Gate::authorize('update', $listing);
+        $this->onlyMyShop($request, $listing);
 
         $listing->load('product.category:id,name', 'product.subcategory:id,name');
         $product = $listing->product;
@@ -70,7 +68,8 @@ class ListingController extends Controller
 
     public function update(ListingRequest $request, ShopProduct $listing): RedirectResponse
     {
-        // ListingRequest already checked ShopProductPolicy@update.
+        $this->onlyMyShop($request, $listing);
+
         $listing->fill($request->safe()->only(['price', 'old_price', 'description']));
         $listing->is_active = $request->boolean('is_active');
 
@@ -90,9 +89,9 @@ class ListingController extends Controller
             ->with('success', 'Listing updated.');
     }
 
-    public function destroy(ShopProduct $listing): RedirectResponse
+    public function destroy(Request $request, ShopProduct $listing): RedirectResponse
     {
-        Gate::authorize('delete', $listing);
+        $this->onlyMyShop($request, $listing);
 
         $listing->delete();
 
@@ -102,5 +101,13 @@ class ListingController extends Controller
 
         return redirect()->route('owner.listings.index')
             ->with('success', 'Removed from your shop. The product stays in the catalog.');
+    }
+
+    /**
+     * A listing can only be changed by the owner of its shop (403 otherwise).
+     */
+    private function onlyMyShop(Request $request, ShopProduct $listing): void
+    {
+        abort_if($listing->shop_id != $request->user()->shop->id, 403);
     }
 }

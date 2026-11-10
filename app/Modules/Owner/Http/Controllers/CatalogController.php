@@ -73,10 +73,15 @@ class CatalogController extends Controller
 
     public function store(ListingRequest $request, Product $product): RedirectResponse
     {
-        $listing = $request->user()->shop->listings()->make(
-            $request->safe()->only(['price', 'old_price', 'description'])
-        );
-        $listing->product_id = $product->id;   // from the URL, checked for duplicates by the request
+        $shop = $request->user()->shop;
+
+        // A product is listed at most once per shop.
+        if ($shop->listings()->where('product_id', $product->id)->exists()) {
+            return back()->withErrors(['product_id' => 'This product is already in your shop.']);
+        }
+
+        $listing = $shop->listings()->make($request->safe()->only(['price', 'old_price', 'description']));
+        $listing->product_id = $product->id;   // from the URL
         $listing->is_active = $request->boolean('is_active');
 
         if ($request->hasFile('thumbnail')) {

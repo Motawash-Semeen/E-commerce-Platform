@@ -8,20 +8,18 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * One shop's listing of a catalog product (table shop_product). Its own id,
- * so owners can edit and remove a listing with route model binding.
+ * One shop's listing of a catalog product (table shop_product), with the
+ * shop's own price, description and thumbnail.
  */
-class ShopProduct extends Pivot
+class ShopProduct extends Model
 {
     use HasFactory;
 
     protected $table = 'shop_product';
-
-    public $incrementing = true;
 
     /**
      * shop_id is left out: it always comes from the owner's own shop.

@@ -8,8 +8,6 @@ use App\Modules\Product\Http\Requests\ProductRequest;
 use App\Modules\Product\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -64,38 +62,29 @@ class ProductController extends Controller
 
     public function store(ProductRequest $request): RedirectResponse
     {
-        $user = $request->user();
-        $shop = $user->shop;
+        $product = new Product($request->safe()->except(['image', 'add_to_shop']));
+        $product->image = $request->file('image')->store('products', 'public');
+        $product->created_by = $request->user()->id;   // never taken from the request
+        $product->save();
 
-        $product = DB::transaction(function () use ($request, $user, $shop) {
-            $product = new Product($request->safe()->except(['image', 'add_to_shop']));
-            $product->image = $request->file('image')->store('products', 'public');
-            $product->created_by = $user->id;   // never taken from the request
-            $product->save();
-
-            // "Also add to my shop": list it at the catalog price, with the catalog image
-            // (no own thumbnail, so the listing falls back to it).
-            if ($shop && $request->boolean('add_to_shop')) {
-                $listing = $shop->listings()->make([
-                    'price' => $product->new_price,
-                    'old_price' => $product->old_price,
-                ]);
-                $listing->product_id = $product->id;
-                $listing->is_active = true;
-                $listing->save();
-            }
-
-            return $product;
-        });
+        // "Also add to my shop": list it at the catalog price. With no own thumbnail,
+        // the listing shows the catalog image.
+        $shop = $request->user()->shop;
+        if ($shop && $request->boolean('add_to_shop')) {
+            $shop->listings()->create([
+                'product_id' => $product->id,
+                'price' => $product->new_price,
+                'old_price' => $product->old_price,
+            ]);
+        }
 
         return redirect()->route('owner.products.index')
             ->with('success', "Product \"{$product->name}\" added to the catalog.");
     }
 
-    public function edit(Product $product): Response
+    public function edit(Request $request, Product $product): Response
     {
-        // Only the owner who created it (ProductPolicy@update); 403 otherwise.
-        Gate::authorize('update', $product);
+        $this->onlyCreator($request, $product);
 
         return Inertia::render('Owner/Products/Edit', [
             'product' => [
@@ -108,7 +97,8 @@ class ProductController extends Controller
 
     public function update(ProductRequest $request, Product $product): RedirectResponse
     {
-        // ProductRequest already checked ProductPolicy@update.
+        $this->onlyCreator($request, $product);
+
         $product->fill($request->safe()->except(['image', 'add_to_shop']));
 
         $oldImage = null;
@@ -125,5 +115,13 @@ class ProductController extends Controller
 
         return redirect()->route('owner.products.index')
             ->with('success', "Product \"{$product->name}\" updated.");
+    }
+
+    /**
+     * Owners may only edit catalog products they created (403 otherwise).
+     */
+    private function onlyCreator(Request $request, Product $product): void
+    {
+        abort_if($product->created_by != $request->user()->id, 403);
     }
 }

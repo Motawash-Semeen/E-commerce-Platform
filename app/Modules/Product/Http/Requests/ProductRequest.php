@@ -7,20 +7,10 @@ use Illuminate\Validation\Rule;
 
 /**
  * Catalog product create and update, shared by the admin and shop owners.
+ * Who may edit which product is checked in the controllers.
  */
 class ProductRequest extends FormRequest
 {
-    /**
-     * Creating: the route's role middleware is enough. Updating: ProductPolicy@update
-     * (the admin, or the shop owner who created the product).
-     */
-    public function authorize(): bool
-    {
-        $product = $this->route('product');
-
-        return ! $product || $this->user()->can('update', $product);
-    }
-
     public function rules(): array
     {
         return [

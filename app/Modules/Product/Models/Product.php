@@ -3,7 +3,6 @@
 namespace App\Modules\Product\Models;
 
 use App\Models\Concerns\HasSlug;
-use App\Models\Shop;
 use App\Models\ShopProduct;
 use App\Models\User;
 use App\Modules\Category\Models\Category;
@@ -13,7 +12,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
@@ -82,13 +80,5 @@ class Product extends Model
     public function listings(): HasMany
     {
         return $this->hasMany(ShopProduct::class);
-    }
-
-    public function shops(): BelongsToMany
-    {
-        return $this->belongsToMany(Shop::class, 'shop_product')
-            ->using(ShopProduct::class)
-            ->withPivot(['id', 'price', 'old_price', 'description', 'thumbnail', 'is_active'])
-            ->withTimestamps();
     }
 }

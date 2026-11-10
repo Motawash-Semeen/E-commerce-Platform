@@ -109,8 +109,7 @@ listings (cascade) and their image files.
 
 ## Design decisions
 
-- **Inertia instead of a separate API:** Laravel keeps routing, validation, policies and
-  session auth; Vue renders every page. No token auth to secure.
+- **Inertia instead of a separate API:** Laravel keeps routing, validation and session auth; Vue renders every page. No token auth to secure.
 - **Shared catalog + per-shop pivot:** products are created once; each shop's price and
   details live in `shop_product`.
 - **One shop per owner:** enforced by a unique `owner_id`. An owner's shop is always
@@ -125,7 +124,7 @@ listings (cascade) and their image files.
 ## Security
 
 - `auth` + `role` middleware on every admin and owner route; registration disabled; inactive users blocked at login
-- Policies: `ProductPolicy` (owners edit only products they created; the admin deletes only unlisted products) and `ShopProductPolicy` (only the listing's shop owner edits or removes it, otherwise 403)
+- Ownership checks in the owner controllers: owners edit only catalog products they created, and only their own shop's listings (403 otherwise). The admin can't delete a product that a shop sells
 - `role`, `created_by`, `owner_id` and `shop_id` are never mass-assignable or read from owner input
 - Validation only in Form Request classes; `$fillable` on every model; Eloquent and route model binding only (no raw SQL)
 - CSRF handled by Inertia/axios (XSRF-TOKEN cookie)
@@ -141,7 +140,7 @@ php artisan test
 ```
 
 The tests run on in-memory SQLite (see `phpunit.xml`), so no test database is needed. They cover
-the 13 required cases (role access, inactive login, product and listing policies, catalog
+the 13 required cases (role access, inactive login, product and listing ownership, catalog
 sharing, duplicate listings, subcategory/category mismatch, customer visibility, per-shop prices,
 blocked delete, image upload) and more.
 
