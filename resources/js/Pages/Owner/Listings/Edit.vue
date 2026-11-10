@@ -15,7 +15,7 @@ defineProps({
 
     <OwnerLayout>
         <template #header>
-            <PageHeader :title="`Edit listing: ${product.name}`" subtitle="Only your shop's listing changes. The catalog product stays the same." />
+            <PageHeader :back-href="route('owner.listings.index')" back-label="My listings" :title="`Edit listing: ${product.name}`" subtitle="Only your shop's listing changes. The catalog product stays the same." />
         </template>
 
         <ListingForm :product="product" :listing="listing" />

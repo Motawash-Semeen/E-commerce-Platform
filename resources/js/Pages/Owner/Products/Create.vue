@@ -15,7 +15,7 @@ defineProps({
 
     <OwnerLayout>
         <template #header>
-            <PageHeader title="Create a catalog product" subtitle="It joins the shared catalog, so other shops can list it too." />
+            <PageHeader :back-href="route('owner.products.index')" back-label="My products" title="Create a catalog product" subtitle="It joins the shared catalog, so other shops can list it too." />
         </template>
 
         <ProductForm

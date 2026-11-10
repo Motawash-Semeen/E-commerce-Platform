@@ -15,7 +15,7 @@ defineProps({
 
     <AdminLayout>
         <template #header>
-            <PageHeader :title="`Edit: ${shop.name}`" />
+            <PageHeader :back-href="route('admin.shops.index')" back-label="Shops" :title="`Edit: ${shop.name}`" />
         </template>
 
         <ShopForm :shop="shop" :owners="owners" />

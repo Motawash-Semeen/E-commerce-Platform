@@ -15,7 +15,7 @@ defineProps({
 
     <AdminLayout>
         <template #header>
-            <PageHeader :title="`Edit: ${product.name}`" subtitle="Changes here don't touch any shop's own price or description." />
+            <PageHeader :back-href="route('admin.products.index')" back-label="Products" :title="`Edit: ${product.name}`" subtitle="Changes here don't touch any shop's own price or description." />
         </template>
 
         <ProductForm

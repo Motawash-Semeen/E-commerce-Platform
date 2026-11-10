@@ -10,7 +10,7 @@ import ShopOwnerForm from './Partials/ShopOwnerForm.vue';
 
     <AdminLayout>
         <template #header>
-            <PageHeader title="New shop owner" subtitle="They can log in once the account is active. Assign a shop under Shops." />
+            <PageHeader :back-href="route('admin.shop-owners.index')" back-label="Shop owners" title="New shop owner" subtitle="They can log in once the account is active. Assign a shop under Shops." />
         </template>
 
         <ShopOwnerForm />

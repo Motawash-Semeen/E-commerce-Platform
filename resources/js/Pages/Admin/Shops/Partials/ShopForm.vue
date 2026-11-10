@@ -1,7 +1,10 @@
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
+import FormActions from '@/Components/FormActions.vue';
+import FormSection from '@/Components/FormSection.vue';
 import ImagePreview from '@/Components/ImagePreview.vue';
 import InputError from '@/Components/InputError.vue';
+import ToggleSwitch from '@/Components/ToggleSwitch.vue';
 
 // Shared by Create and Edit.
 const props = defineProps({
@@ -29,53 +32,49 @@ function submit() {
 </script>
 
 <template>
-    <form class="card max-w-2xl space-y-6 p-6" @submit.prevent="submit">
-        <div class="grid gap-6 sm:grid-cols-2">
-            <div>
-                <label for="name" class="form-label">Shop name</label>
-                <input id="name" v-model="form.name" type="text" maxlength="150" class="form-input" required autofocus />
-                <InputError class="mt-2" :message="form.errors.name" />
+    <form @submit.prevent="submit">
+        <FormSection title="Shop details" description="Customers see the name and description on the shop page.">
+            <div class="grid gap-6 sm:grid-cols-2">
+                <div>
+                    <label for="name" class="form-label">Shop name</label>
+                    <input id="name" v-model="form.name" type="text" maxlength="150" class="form-input" required autofocus />
+                    <InputError class="mt-2" :message="form.errors.name" />
+                </div>
+                <div>
+                    <label for="owner_id" class="form-label">Owner</label>
+                    <select id="owner_id" v-model="form.owner_id" class="form-input" required>
+                        <option value="" disabled>Choose a shop owner</option>
+                        <option v-for="owner in owners" :key="owner.id" :value="owner.id">{{ owner.name }} ({{ owner.email }})</option>
+                    </select>
+                    <p v-if="!owners.length" class="form-hint">
+                        Every shop owner already has a shop.
+                        <Link :href="route('admin.shop-owners.create')" class="font-medium text-indigo-600 hover:underline">Create a shop owner</Link>
+                    </p>
+                    <InputError class="mt-2" :message="form.errors.owner_id" />
+                </div>
             </div>
 
             <div>
-                <label for="owner_id" class="form-label">Owner</label>
-                <select id="owner_id" v-model="form.owner_id" class="form-input" required>
-                    <option value="" disabled>Choose a shop owner</option>
-                    <option v-for="owner in owners" :key="owner.id" :value="owner.id">{{ owner.name }} ({{ owner.email }})</option>
-                </select>
-                <p v-if="!owners.length" class="form-hint">
-                    Every shop owner already has a shop.
-                    <Link :href="route('admin.shop-owners.create')" class="font-medium text-indigo-600 hover:underline">Create a shop owner</Link>
-                </p>
-                <InputError class="mt-2" :message="form.errors.owner_id" />
+                <label for="description" class="form-label">Description <span class="font-normal text-gray-400">(optional)</span></label>
+                <textarea id="description" v-model="form.description" rows="4" maxlength="2000" class="form-input" placeholder="What does this shop sell?" />
+                <InputError class="mt-2" :message="form.errors.description" />
             </div>
-        </div>
+        </FormSection>
 
-        <div>
-            <label for="description" class="form-label">Description <span class="font-normal text-gray-400">(optional)</span></label>
-            <textarea id="description" v-model="form.description" rows="4" maxlength="2000" class="form-input" />
-            <InputError class="mt-2" :message="form.errors.description" />
-        </div>
-
-        <div>
-            <label for="logo" class="form-label">Logo <span class="font-normal text-gray-400">(optional)</span></label>
+        <FormSection title="Logo" description="Optional. Without a logo the shop shows its first letter.">
             <ImagePreview id="logo" v-model="form.logo" :current-url="shop?.logo_url" shape="circle" />
-            <InputError class="mt-2" :message="form.errors.logo" />
-        </div>
+            <InputError :message="form.errors.logo" />
+        </FormSection>
 
-        <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
-            <input v-model="form.is_active" type="checkbox" class="mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
-            <span>
-                <span class="block text-sm font-medium text-gray-900">Active</span>
-                <span class="block text-xs text-gray-500">Inactive shops and their products are hidden from customers.</span>
-            </span>
-        </label>
+        <FormSection title="Visibility" description="Inactive shops and all their products are hidden from customers.">
+            <ToggleSwitch v-model="form.is_active" label="Shop is open" description="Customers can see this shop and its products." />
+        </FormSection>
 
-        <div class="flex items-center gap-3">
-            <button type="submit" class="btn-primary" :disabled="form.processing">
-                {{ shop ? 'Save changes' : 'Create shop' }}
-            </button>
-            <Link :href="route('admin.shops.index')" class="btn-secondary">Cancel</Link>
-        </div>
+        <FormActions
+            :cancel-href="route('admin.shops.index')"
+            :processing="form.processing"
+            :dirty="form.isDirty"
+            :submit-label="shop ? 'Save changes' : 'Create shop'"
+        />
     </form>
 </template>

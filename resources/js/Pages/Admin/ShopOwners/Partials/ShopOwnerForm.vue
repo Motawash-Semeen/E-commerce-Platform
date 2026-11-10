@@ -1,6 +1,9 @@
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
+import FormActions from '@/Components/FormActions.vue';
+import FormSection from '@/Components/FormSection.vue';
 import InputError from '@/Components/InputError.vue';
+import ToggleSwitch from '@/Components/ToggleSwitch.vue';
 
 // Shared by Create and Edit. On edit the password is optional (blank keeps it).
 const props = defineProps({
@@ -27,47 +30,46 @@ function submit() {
 </script>
 
 <template>
-    <form class="card max-w-2xl space-y-6 p-6" @submit.prevent="submit">
-        <div class="grid gap-6 sm:grid-cols-2">
-            <div>
-                <label for="name" class="form-label">Name</label>
-                <input id="name" v-model="form.name" type="text" maxlength="255" class="form-input" required autofocus />
-                <InputError class="mt-2" :message="form.errors.name" />
+    <form @submit.prevent="submit">
+        <FormSection title="Account" description="The owner logs in with this email address.">
+            <div class="grid gap-6 sm:grid-cols-2">
+                <div>
+                    <label for="name" class="form-label">Full name</label>
+                    <input id="name" v-model="form.name" type="text" maxlength="255" class="form-input" required autofocus />
+                    <InputError class="mt-2" :message="form.errors.name" />
+                </div>
+                <div>
+                    <label for="email" class="form-label">Email</label>
+                    <input id="email" v-model="form.email" type="email" maxlength="255" class="form-input" required autocomplete="off" />
+                    <InputError class="mt-2" :message="form.errors.email" />
+                </div>
             </div>
+        </FormSection>
 
-            <div>
-                <label for="email" class="form-label">Email</label>
-                <input id="email" v-model="form.email" type="email" maxlength="255" class="form-input" required autocomplete="off" />
-                <InputError class="mt-2" :message="form.errors.email" />
+        <FormSection title="Password" :description="owner ? 'Leave both fields empty to keep the current password.' : 'At least 8 characters. Share it with the owner safely.'">
+            <div class="grid gap-6 sm:grid-cols-2">
+                <div>
+                    <label for="password" class="form-label">{{ owner ? 'New password' : 'Password' }}</label>
+                    <input id="password" v-model="form.password" type="password" class="form-input" :required="!owner" autocomplete="new-password" />
+                    <InputError class="mt-2" :message="form.errors.password" />
+                </div>
+                <div>
+                    <label for="password_confirmation" class="form-label">Confirm password</label>
+                    <input id="password_confirmation" v-model="form.password_confirmation" type="password" class="form-input" :required="!owner" autocomplete="new-password" />
+                </div>
             </div>
+        </FormSection>
 
-            <div>
-                <label for="password" class="form-label">{{ owner ? 'New password' : 'Password' }}</label>
-                <input id="password" v-model="form.password" type="password" class="form-input" :required="!owner" autocomplete="new-password" />
-                <p class="form-hint">{{ owner ? 'Leave blank to keep the current password.' : 'At least 8 characters.' }}</p>
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
+        <FormSection title="Access" description="Turn the account off to block logging in without deleting it.">
+            <ToggleSwitch v-model="form.is_active" label="Active account" description="Inactive accounts can't log in." />
+            <InputError :message="form.errors.is_active" />
+        </FormSection>
 
-            <div>
-                <label for="password_confirmation" class="form-label">Confirm password</label>
-                <input id="password_confirmation" v-model="form.password_confirmation" type="password" class="form-input" :required="!owner" autocomplete="new-password" />
-            </div>
-        </div>
-
-        <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
-            <input v-model="form.is_active" type="checkbox" class="mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
-            <span>
-                <span class="block text-sm font-medium text-gray-900">Active</span>
-                <span class="block text-xs text-gray-500">Inactive accounts can't log in.</span>
-            </span>
-        </label>
-        <InputError v-if="form.errors.is_active" :message="form.errors.is_active" />
-
-        <div class="flex items-center gap-3">
-            <button type="submit" class="btn-primary" :disabled="form.processing">
-                {{ owner ? 'Save changes' : 'Create account' }}
-            </button>
-            <Link :href="route('admin.shop-owners.index')" class="btn-secondary">Cancel</Link>
-        </div>
+        <FormActions
+            :cancel-href="route('admin.shop-owners.index')"
+            :processing="form.processing"
+            :dirty="form.isDirty"
+            :submit-label="owner ? 'Save changes' : 'Create account'"
+        />
     </form>
 </template>

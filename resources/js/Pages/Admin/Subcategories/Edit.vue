@@ -15,7 +15,7 @@ defineProps({
 
     <AdminLayout>
         <template #header>
-            <PageHeader :title="`Edit: ${subcategory.name}`" />
+            <PageHeader :back-href="route('admin.subcategories.index')" back-label="Subcategories" :title="`Edit: ${subcategory.name}`" />
         </template>
 
         <SubcategoryForm :subcategory="subcategory" :categories="categories" />

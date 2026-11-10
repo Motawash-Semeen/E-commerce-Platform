@@ -1,7 +1,11 @@
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
+import FormActions from '@/Components/FormActions.vue';
+import FormSection from '@/Components/FormSection.vue';
 import ImagePreview from '@/Components/ImagePreview.vue';
 import InputError from '@/Components/InputError.vue';
+import MoneyInput from '@/Components/MoneyInput.vue';
+import ToggleSwitch from '@/Components/ToggleSwitch.vue';
 import { formatPrice } from '@/utils/format';
 
 /**
@@ -9,7 +13,7 @@ import { formatPrice } from '@/utils/format';
  * Add (no listing): prefilled from the catalog. Edit: the listing's values.
  */
 const props = defineProps({
-    product: { type: Object, required: true },   // catalog values: { id, slug, name, description, new_price, old_price, image_url, category, subcategory }
+    product: { type: Object, required: true },   // catalog values: { slug, name, description, new_price, old_price, image_url, category, subcategory }
     listing: { type: Object, default: null },    // { id, price, old_price, description, is_active, thumbnail_url }
 });
 
@@ -32,63 +36,58 @@ function submit() {
 </script>
 
 <template>
-    <div class="grid gap-6 lg:grid-cols-3">
+    <form @submit.prevent="submit">
         <!-- Catalog reference -->
-        <aside class="card h-fit overflow-hidden lg:order-last">
-            <img :src="product.image_url" :alt="product.name" class="aspect-[4/3] w-full object-cover" />
-            <div class="space-y-2 p-5">
+        <div class="card mb-8 flex flex-col overflow-hidden sm:flex-row">
+            <img :src="product.image_url" :alt="product.name" class="h-40 w-full object-cover sm:h-auto sm:w-48" />
+            <div class="space-y-1 p-5">
                 <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600">From the catalog</p>
-                <h2 class="font-semibold text-gray-900">{{ product.name }}</h2>
-                <p class="text-sm text-gray-500">{{ product.category }} › {{ product.subcategory }}</p>
-                <p class="text-sm text-gray-600">Suggested price: <span class="font-semibold text-gray-900">{{ formatPrice(product.new_price) }}</span></p>
-                <p class="line-clamp-4 whitespace-pre-line text-sm text-gray-500">{{ product.description }}</p>
+                <h2 class="text-lg font-semibold text-gray-900">{{ product.name }}</h2>
+                <p class="text-sm text-gray-500">{{ product.category }} › {{ product.subcategory }} · Suggested <span class="font-semibold text-gray-900">{{ formatPrice(product.new_price) }}</span></p>
+                <p class="line-clamp-2 whitespace-pre-line text-sm text-gray-500">{{ product.description }}</p>
             </div>
-        </aside>
+        </div>
 
-        <form class="card space-y-6 p-6 lg:col-span-2" @submit.prevent="submit">
-            <InputError v-if="form.errors.product_id" :message="form.errors.product_id" />
+        <InputError v-if="form.errors.product_id" class="mb-6" :message="form.errors.product_id" />
 
+        <FormSection title="Your price" description="What your shop charges. Other shops keep their own prices.">
             <div class="grid gap-6 sm:grid-cols-2">
                 <div>
-                    <label for="price" class="form-label">Your price (Tk)</label>
-                    <input id="price" v-model="form.price" type="number" min="0" step="0.01" class="form-input" required />
+                    <label for="price" class="form-label">Price</label>
+                    <MoneyInput id="price" v-model="form.price" required />
                     <InputError class="mt-2" :message="form.errors.price" />
                 </div>
                 <div>
-                    <label for="old_price" class="form-label">Old price (Tk) <span class="font-normal text-gray-400">(optional)</span></label>
-                    <input id="old_price" v-model="form.old_price" type="number" min="0" step="0.01" class="form-input" />
+                    <label for="old_price" class="form-label">Old price <span class="font-normal text-gray-400">(optional)</span></label>
+                    <MoneyInput id="old_price" v-model="form.old_price" />
                     <p class="form-hint">Shown struck through. Must be at least your price.</p>
                     <InputError class="mt-2" :message="form.errors.old_price" />
                 </div>
             </div>
+        </FormSection>
 
+        <FormSection title="Your details" description="Optional. Leave them empty to use the catalog description and image.">
             <div>
-                <label for="description" class="form-label">Your description <span class="font-normal text-gray-400">(optional)</span></label>
+                <label for="description" class="form-label">Description</label>
                 <textarea id="description" v-model="form.description" rows="5" maxlength="5000" class="form-input" placeholder="Leave empty to use the catalog description." />
                 <InputError class="mt-2" :message="form.errors.description" />
             </div>
-
             <div>
-                <label for="thumbnail" class="form-label">Your thumbnail <span class="font-normal text-gray-400">(optional)</span></label>
+                <label for="thumbnail" class="form-label">Thumbnail</label>
                 <ImagePreview id="thumbnail" v-model="form.thumbnail" :current-url="listing?.thumbnail_url ?? product.image_url" />
-                <p class="form-hint">Without your own image, customers see the catalog image.</p>
                 <InputError class="mt-2" :message="form.errors.thumbnail" />
             </div>
+        </FormSection>
 
-            <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
-                <input v-model="form.is_active" type="checkbox" class="mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
-                <span>
-                    <span class="block text-sm font-medium text-gray-900">Visible in my shop</span>
-                    <span class="block text-xs text-gray-500">Untick to hide it from customers without removing it.</span>
-                </span>
-            </label>
+        <FormSection title="Visibility" description="Hide a product without removing it from your shop.">
+            <ToggleSwitch v-model="form.is_active" label="Visible in my shop" description="Customers can see and open this product." />
+        </FormSection>
 
-            <div class="flex items-center gap-3">
-                <button type="submit" class="btn-primary" :disabled="form.processing">
-                    {{ listing ? 'Save changes' : 'Add to my shop' }}
-                </button>
-                <Link :href="listing ? route('owner.listings.index') : route('owner.catalog.index')" class="btn-secondary">Cancel</Link>
-            </div>
-        </form>
-    </div>
+        <FormActions
+            :cancel-href="listing ? route('owner.listings.index') : route('owner.catalog.index')"
+            :processing="form.processing"
+            :dirty="form.isDirty"
+            :submit-label="listing ? 'Save changes' : 'Add to my shop'"
+        />
+    </form>
 </template>

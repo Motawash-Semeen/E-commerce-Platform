@@ -57,6 +57,15 @@
     }
 }
 
+/* Phones: each table row becomes a small card (no sideways scrolling, actions stay visible). */
+@media (max-width: 639px) {
+    .stack-table thead { display: none; }
+    .stack-table tbody tr { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; padding: 0.75rem 1rem; }
+    .stack-table td { padding: 0; white-space: normal; }
+    .stack-table td:first-child { width: 100%; }
+    .stack-table td:last-child { margin-left: auto; }
+}
+
 /* People who ask their system for less motion get none. */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

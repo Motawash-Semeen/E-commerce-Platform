@@ -2,9 +2,10 @@
 import { ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import EmptyState from '@/Components/EmptyState.vue';
+import DeleteButton from '@/Components/DeleteButton.vue';
+import EditLink from '@/Components/EditLink.vue';
 import PageHeader from '@/Components/PageHeader.vue';
-import Pagination from '@/Components/Pagination.vue';
+import ResourceTable from '@/Components/ResourceTable.vue';
 import SearchInput from '@/Components/SearchInput.vue';
 
 const props = defineProps({
@@ -23,12 +24,6 @@ watch(category, (value) => {
         { preserveState: true, replace: true },
     );
 });
-
-function destroy(subcategory) {
-    if (confirm(`Delete the subcategory "${subcategory.name}"?`)) {
-        router.delete(route('admin.subcategories.destroy', subcategory.slug), { preserveScroll: true });
-    }
-}
 </script>
 
 <template>
@@ -36,50 +31,50 @@ function destroy(subcategory) {
 
     <AdminLayout>
         <template #header>
-            <PageHeader title="Subcategories" subtitle="Second-level groups inside each category.">
+            <PageHeader title="Subcategories" :count="subcategories.total" subtitle="Second-level groups inside each category.">
                 <Link :href="route('admin.subcategories.create')" class="btn-primary">+ New subcategory</Link>
             </PageHeader>
         </template>
 
-        <div class="card overflow-hidden">
-            <div class="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row">
+        <ResourceTable :paginator="subcategories" empty-title="No subcategories found" empty-message="Try a different search or filter, or create one.">
+            <template #filters>
                 <SearchInput :model-value="filters.search" :extra="{ category: category || undefined }" placeholder="Search subcategories..." />
                 <select v-model="category" aria-label="Filter by category" class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:w-56 sm:text-sm">
                     <option value="">All categories</option>
                     <option v-for="option in categories" :key="option.id" :value="option.id">{{ option.name }}</option>
                 </select>
-            </div>
+            </template>
 
-            <div v-if="subcategories.data.length" class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="table-th">Name</th>
-                            <th class="table-th">Category</th>
-                            <th class="table-th">Products</th>
-                            <th class="table-th text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr v-for="subcategory in subcategories.data" :key="subcategory.id" class="hover:bg-gray-50">
-                            <td class="table-td font-medium text-gray-900">{{ subcategory.name }}</td>
-                            <td class="table-td">
-                                <span class="badge bg-indigo-50 text-indigo-700">{{ subcategory.category }}</span>
-                            </td>
-                            <td class="table-td">{{ subcategory.products_count }}</td>
-                            <td class="table-td text-right">
-                                <Link :href="route('admin.subcategories.edit', subcategory.slug)" class="btn-secondary btn-sm">Edit</Link>
-                                <button type="button" class="btn-sm btn ml-2 text-red-600 hover:bg-red-50" @click="destroy(subcategory)">Delete</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <EmptyState v-else title="No subcategories found" message="Try a different search or filter, or create one." />
+            <template #head>
+                <th class="table-th">Subcategory</th>
+                <th class="table-th">Category</th>
+                <th class="table-th">Products</th>
+                <th class="table-th text-right">Actions</th>
+            </template>
 
-            <div class="border-t border-gray-200 p-4" v-if="subcategories.last_page > 1">
-                <Pagination :paginator="subcategories" />
-            </div>
-        </div>
+            <template #row="{ item }">
+                <td class="table-td">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 transition group-hover:scale-110">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
+                            </svg>
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ item.name }}</span>
+                    </div>
+                </td>
+                <td class="table-td"><span class="badge bg-indigo-50 text-indigo-700">{{ item.category }}</span></td>
+                <td class="table-td"><span class="badge bg-sky-50 text-sky-700">{{ item.products_count }}</span></td>
+                <td class="table-td text-right">
+                    <EditLink :href="route('admin.subcategories.edit', item.slug)" />
+                    <DeleteButton
+                        :url="route('admin.subcategories.destroy', item.slug)"
+                        :title="`Delete ${item.name}?`"
+                        message="Only subcategories without products can be deleted. This cannot be undone."
+                    />
+                </td>
+            </template>
+        </ResourceTable>
     </AdminLayout>
 </template>

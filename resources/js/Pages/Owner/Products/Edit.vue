@@ -15,7 +15,7 @@ defineProps({
 
     <OwnerLayout>
         <template #header>
-            <PageHeader :title="`Edit: ${product.name}`" subtitle="This changes the catalog entry. Each shop keeps its own price and description." />
+            <PageHeader :back-href="route('owner.products.index')" back-label="My products" :title="`Edit: ${product.name}`" subtitle="This changes the catalog entry. Each shop keeps its own price and description." />
         </template>
 
         <ProductForm

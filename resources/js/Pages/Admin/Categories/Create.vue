@@ -10,7 +10,7 @@ import CategoryForm from './Partials/CategoryForm.vue';
 
     <AdminLayout>
         <template #header>
-            <PageHeader title="New category" />
+            <PageHeader :back-href="route('admin.categories.index')" back-label="Categories" title="New category" />
         </template>
 
         <CategoryForm />

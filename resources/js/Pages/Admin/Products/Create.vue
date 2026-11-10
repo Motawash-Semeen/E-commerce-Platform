@@ -14,7 +14,7 @@ defineProps({
 
     <AdminLayout>
         <template #header>
-            <PageHeader title="New catalog product" subtitle="Shop owners set their own price when they list it." />
+            <PageHeader :back-href="route('admin.products.index')" back-label="Products" title="New catalog product" subtitle="Shop owners set their own price when they list it." />
         </template>
 
         <ProductForm
